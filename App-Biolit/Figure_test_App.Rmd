@@ -1,0 +1,148 @@
+---
+title: "Figure_test_App-Biolit"
+author: "Serranito Bruno"
+date: "09/07/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+```{r}
+library(shiny)
+library(dplyr)
+library(ggplot2)
+
+
+# Chargement des bases de données Abondance + Pred
+load('Biolit_Ab.RData')
+load('Biolit_Pred.RData')
+
+
+
+
+
+
+# Préparation Pred
+Pred3= Pred2 %>% select(-Cover)
+DF=cbind(df3,Pred3) %>% select(Abb, colnames(Pred3)) %>%  distinct() %>% group_by(Abb) %>%
+  summarise_at(colnames(Pred3), mean) 
+
+# Préparation Bio
+StJacu=df3 %>%
+    mutate(N.couv = case_when(recouv %in% c("4","5") ~ "Forte couverture",
+                              recouv %in% c("2","3") ~ "Moyenne couverture",
+                              TRUE ~ "Faible couverture"))     %>% 
+mutate(Tot=bigorneau+ calliostome+gibbulecomm+gibbuleombi+lit.comp.saxa+
+                   littospp+monodonte+nasse+pourpre+patelle) 
+    # mutate(Site=rep('All',nrow(df3)))
+
+```
+
+# Figure boxplot 
+```{r}
+
+
+        
+          Var=unlist(DF[,'Nit'])
+
+        Sel.var=as.data.frame(as.matrix(DF[which(DF$Abb %in% 'ADG'),c('Abb','Nit')]))        # 
+ probs <- c(.25,.5, 0.75)
+ 
+ 
+        dens <- density(Var)
+        df.quant=data.frame(x=dens$x, y=dens$y)
+        quantiles <- quantile(Var, prob=probs)
+        df.quant$quant <- factor(findInterval(dens$x,quantiles))
+        
+        df.test=df.quant %>%  group_by(quant) %>%
+        summarize(minX = min(x), 
+        maxX = max(x))
+        
+
+        
+        
+        ggplot()+
+          geom_rect(data=df.test,aes(xmin=minX, xmax=maxX, ymin=-.5,ymax=.5 , fill=quant))+
+          # geom_jitter(data=DF,aes(SST.M,y=0), shape=21, fill='grey')+
+          # geom_boxplot(data=DF,aes(Nit), width=1, alpha=.4)+
+          scale_fill_brewer(direction=1,name = "Distribution \n des valeurs", labels = c("0-25%", "25-50%",                        "50-75%","75-100%"))+
+          
+          # geom_vline(data=Sel.var, aes(xintercept=Sel.var[,2], col=Abb), linetype=6, size=1)+
+          # geom_vline(aes(xintercept=quantiles))+
+          geom_hline(yintercept=-0.50,size=1.5)+
+          geom_vline(data=Sel.var,aes(xintercept=as.numeric(as.character(Sel.var[,2]))), 
+                     arrow = arrow(length = unit(0.5, "cm")))+
+          geom_segment(data=Sel.var,aes(x=as.numeric(as.character(Sel.var[,2])),
+                                        xend=as.numeric(as.character(Sel.var[,2])), y=0, yend=-.5),
+                       arrow = arrow(length = unit(0.5, "cm")), size=2,  lineend = c('round'),
+                       linejoin = c('mitre'))+ # Vecteur déterminant la valeur de la station
+          guides(col=guide_legend(title="Site"))+
+          # scale_fill_discrete(name = "Distribution", labels = c("0-25%", "25-50%", "50-75%"))+
+          theme(panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                panel.border = element_blank(),
+                panel.background = element_blank(),
+                axis.ticks.length=unit(0.2,"inch"),
+                axis.ticks.y=element_blank(),
+                axis.text.x=element_text(size=12))+
+          ylab('')
+        
+ 
+
+
+        
+        
+        ggplot()+
+          # geom_density(data=DATA,aes(Inor), alpha=.4)+
+          geom_line(data=df.quant,aes(x,y), size=1)+
+          geom_ribbon(data=df.quant,aes(x=x,ymin=0, ymax=y, fill=quant))+
+          # scale_x_continuous(breaks=quantiles) + 
+          # scale_fill_brewer(guide="none", palette="Spectral", direction=-1)+
+          theme_light()+
+          geom_vline(data=Sel.var, aes(xintercept=Sel.var[,2], col=Abb), linetype=2, size=1.5)+
+          scale_fill_brewer(direction=-1)+
+          guides(fill=F)+
+          # geom_vline(xintercept=(DF.tar$SST.M), linetype=2, size=1, col='red')+
+          # scale_fill_brewer(direction=-1)+
+          ylab('')+
+          xlab('')
+```
+
+Abondance / recouvrement
+```{r}
+library(reshape2)
+library(ggpubr)
+
+df3$substrat3 = with(df3, factor(substrat3, levels =
+c('Pel','Fspir','Fvesi','Anodo','Fser')))
+
+DF_bio=melt(df3, id.var=c('Abb','AAAA','substrat3','date','longit', 'lat', 'recouv'), var='Spe')
+# DF_bio=dcast(Abb + longit+lat+ date+ recouv + substrat3 + AAAA ~ Spe, data=df3, value.var='ab')
+DF_bio=DF_bio %>% group_by( Spe) %>% mutate(Val=scale(value))
+
+DF_bio2=DF_bio %>% filter( Spe %in% c('Patelle','monodonte'))
+
+
+
+p1=ggplot(data=DF_bio2,aes(recouv,Val, col=Spe))+
+  # geom_jitter()+
+  geom_smooth(aes(group=Spe), method='loess')+
+  theme_minimal()+
+  ylab('Fréquence des abondances (%)')+
+  xlab('Classe de recouvrement')
+
+p2=ggplot(data=DF_bio2,aes(substrat3,as.numeric(Val), col=Spe))+
+  # geom_jitter()+
+ stat_summary( aes(group=Spe, col=Spe),fun.y=mean, geom="line",size=1.5)+
+  # scale_y_log10()+
+ stat_summary( fun.data="mean_cl_normal",size=2)+
+  theme_minimal()+
+  ylab('Fréquence des abondances (%)')+
+  xlab('Ceinture algues brunes')
+
+ggarrange(p1,p2, ncol=1, common.legend=T)
+
+```
+
