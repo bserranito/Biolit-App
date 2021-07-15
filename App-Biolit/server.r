@@ -1,6 +1,7 @@
 ######  server 
 library(shiny)
 library(dplyr)
+library(reshape2)
 library(ggplot2)
 
 # Chargement des bases de données Abondance + Pred
