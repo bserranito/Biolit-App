@@ -3,6 +3,7 @@ library(shiny)
 library(dplyr)
 library(reshape2)
 library(ggplot2)
+library(ggpubr)
 
 # Chargement des bases de données Abondance + Pred
 load('Biolit_Ab.RData')
@@ -157,7 +158,7 @@ server <- function(input, output) {
       ylab('Fréquence des abondances (%)')+
       xlab('Ceinture algues brunes')
     
-    ggarrange(p1,p2, ncol=1, common.legend=T)# mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
+    ggpubr::ggarrange(p1,p2, ncol=1, common.legend=T)# mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
   })
 }
 
