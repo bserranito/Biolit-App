@@ -87,44 +87,39 @@ server <- function(input, output) {
     #     ylab('')+
     #     xlab('')
   })
-  # Plot 2
-  output$bioPlot <- renderPlot({
-    
-    # mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
-    
-    Quant=as.vector(quantile(StJacu[,input$Var_resp] , probs = c(.25,.5,.75)))
-    
-    Sites= StJacu  %>% filter(Abb %in% input$Sites_Ab)
-    StJacu=StJacu %>% mutate(Site=rep('All',nrow(StJacu)))
-    Sites=Sites %>% mutate(Site=rep('Sites select',nrow(Sites)))
-    
-    nDF=rbind(StJacu,Sites)
-    
-    ggplot(data=nDF,aes_string('Site',y=input$Var_resp))+
-      # geom_jitter(size=1, shape=21)+
-      geom_violin(aes(fill=Site))+
-      geom_boxplot(alpha=.8, width=.1)+
-      # geom_split_violin(alpha=.8)+
-      # geom_hline(yintercept=Quant,linetype=2, size=.9)+
-      # # geom_split_violin()
-      # # geom_violin(aes(fill=substrat3), alpha=.2)+ 
-      # # # geom_jitter(data=subset(StJacu, Abb %in%   c("IDB","ILC")), col='green')+
-      # # geom_boxplot(data=subset(StJacu, Abb %in%   c("IDB","ILC")),width=.2)+
-      # scale_y_log10()+
-      facet_grid(substrat3~N.couv)+
-      theme_light()+
-      xlab('')
-  })
+  # # Plot 2
+  # output$bioPlot <- renderPlot({
+  #   
+  #   # mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
+  #   
+  #   Quant=as.vector(quantile(StJacu[,input$Var_resp] , probs = c(.25,.5,.75)))
+  #   
+  #   Sites= StJacu  %>% filter(Abb %in% input$Sites_Ab)
+  #   StJacu=StJacu %>% mutate(Site=rep('All',nrow(StJacu)))
+  #   Sites=Sites %>% mutate(Site=rep('Sites select',nrow(Sites)))
+  #   
+  #   nDF=rbind(StJacu,Sites)
+  #   
+  #   ggplot(data=nDF,aes_string('Site',y=input$Var_resp))+
+  #     # geom_jitter(size=1, shape=21)+
+  #     geom_violin(aes(fill=Site))+
+  #     geom_boxplot(alpha=.8, width=.1)+
+  #     # geom_split_violin(alpha=.8)+
+  #     # geom_hline(yintercept=Quant,linetype=2, size=.9)+
+  #     # # geom_split_violin()
+  #     # # geom_violin(aes(fill=substrat3), alpha=.2)+ 
+  #     # # # geom_jitter(data=subset(StJacu, Abb %in%   c("IDB","ILC")), col='green')+
+  #     # # geom_boxplot(data=subset(StJacu, Abb %in%   c("IDB","ILC")),width=.2)+
+  #     # scale_y_log10()+
+  #     facet_grid(substrat3~N.couv)+
+  #     theme_light()+
+  #     xlab('')
+  # })
   
   # Plot 3
   output$Estran_plot <- renderPlot({
     
-    df3$substrat3 = with(df3, factor(substrat3, levels =
-                                       c('Pel','Fspir','Fvesi','Anodo','Fser')))
-    
-    DF_bio=reshape2::melt(df3, id.var=c('Abb','AAAA','substrat3','date','longit', 'lat', 'recouv'), var='Spe')
-    # DF_bio=dcast(Abb + longit+lat+ date+ recouv + substrat3 + AAAA ~ Spe, data=df3, value.var='ab')
-    DF_bio=DF_bio %>% group_by(Spe) %>% mutate(Val=scale(value))
+  
     
     
     req(input$sel_spe) # Requiert une valeur de sites
