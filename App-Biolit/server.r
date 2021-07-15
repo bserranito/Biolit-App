@@ -1,7 +1,33 @@
 ######  server 
+library(shiny)
+library(dplyr)
+library(ggplot2)
+
+# Chargement des bases de données Abondance + Pred
+load('Biolit_Ab.RData')
+load('Biolit_Pred.RData')
 
 
-server2 <- function(input, output) {
+
+# Préparation Pred
+Pred3= Pred2 %>% select(-Cover)
+DF=cbind(df3,Pred3) %>% select(Abb, colnames(Pred3)) %>%  distinct()%>% group_by(Abb) %>%
+  summarise_at(colnames(Pred3), mean) 
+
+DF.unit=data.frame(Bath_unit='m',Pop_unit='popoulo',Nit_unit='µg/ml',Sal_unit=NA,
+                   Chloa_new.mean_unit='mg',SSTcold_unit='°C',SST.M_unit='°C',
+                   WE_unit='truc',WKE_unit='machin',TAMP_unit='biloute')
+
+# Préparation Bio
+StJacu=df3 %>%
+  mutate(N.couv = case_when(recouv %in% c("4","5") ~ "Forte couverture",
+                            recouv %in% c("2","3") ~ "Moyenne couverture",
+                            TRUE ~ "Faible couverture"))     %>% 
+  mutate(Tot=bigorneau+ calliostome+gibbulecomm+gibbuleombi+lit.comp.saxa+
+           littospp+monodonte+nasse+pourpre+patelle) 
+
+
+server <- function(input, output) {
   
   output$ParamPlot <- renderPlot({
     # Selectionne du parametre
@@ -133,4 +159,5 @@ server2 <- function(input, output) {
     ggarrange(p1,p2, ncol=1, common.legend=T)# mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
   })
 }
+
 
