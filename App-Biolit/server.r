@@ -1,3 +1,12 @@
+#list of packages required
+list.of.packages <- c("shiny","dplyr","ggplot2","reshape2","ggpubr")
+
+#checking missing packages from list
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+
+#install missing ones
+if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
+
 ######  server 
 library(shiny)
 library(dplyr)
