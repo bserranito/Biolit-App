@@ -134,4 +134,3 @@ server2 <- function(input, output) {
   })
 }
 
-shinyApp(ui = ui, server = server2)
