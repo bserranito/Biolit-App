@@ -133,7 +133,7 @@ server <- function(input, output) {
     df3$substrat3 = with(df3, factor(substrat3, levels =
                                        c('Pel','Fspir','Fvesi','Anodo','Fser')))
     
-    DF_bio=melt(df3, id.var=c('Abb','AAAA','substrat3','date','longit', 'lat', 'recouv'), var='Spe')
+    DF_bio=reshape2::melt(df3, id.var=c('Abb','AAAA','substrat3','date','longit', 'lat', 'recouv'), var='Spe')
     # DF_bio=dcast(Abb + longit+lat+ date+ recouv + substrat3 + AAAA ~ Spe, data=df3, value.var='ab')
     DF_bio=DF_bio %>% group_by(Spe) %>% mutate(Val=scale(value))
     
