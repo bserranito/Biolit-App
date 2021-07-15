@@ -1,5 +1,5 @@
 #list of packages required
-list.of.packages <- c("shiny","dplyr","ggplot2","reshape2","ggpubr","Rcpp","units")
+list.of.packages <- c("shiny","dplyr","ggplot2","reshape2","ggpubr","Rcpp","units","Hmisc")
 
 #checking missing packages from list
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -14,6 +14,7 @@ library(reshape2)
 library(ggplot2)
 library(ggpubr)
 library(Rcpp)
+library(Hmisc)
 
 load('Biolit_app_datasets.RData')
 
