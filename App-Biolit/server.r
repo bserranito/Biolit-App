@@ -13,30 +13,9 @@ library(dplyr)
 library(reshape2)
 library(ggplot2)
 library(ggpubr)
+library(Rcpp)
 
-# Chargement des bases de données Abondance + Pred
-load('Biolit_Ab.RData')
-load('Biolit_Pred.RData')
-
-
-
-# Préparation Pred
-Pred3= Pred2 %>% select(-Cover)
-DF=cbind(df3,Pred3) %>% select(Abb, colnames(Pred3)) %>%  distinct()%>% group_by(Abb) %>%
-  summarise_at(colnames(Pred3), mean) 
-
-DF.unit=data.frame(Bath_unit='m',Pop_unit='popoulo',Nit_unit='µg/ml',Sal_unit=NA,
-                   Chloa_new.mean_unit='mg',SSTcold_unit='°C',SST.M_unit='°C',
-                   WE_unit='truc',WKE_unit='machin',TAMP_unit='biloute')
-
-# Préparation Bio
-StJacu=df3 %>%
-  mutate(N.couv = case_when(recouv %in% c("4","5") ~ "Forte couverture",
-                            recouv %in% c("2","3") ~ "Moyenne couverture",
-                            TRUE ~ "Faible couverture"))     %>% 
-  mutate(Tot=bigorneau+ calliostome+gibbulecomm+gibbuleombi+lit.comp.saxa+
-           littospp+monodonte+nasse+pourpre+patelle) 
-
+load('Biolit_app_datasets.RData')
 
 server <- function(input, output) {
   
