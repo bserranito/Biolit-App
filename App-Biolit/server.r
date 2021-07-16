@@ -43,7 +43,7 @@ server <- function(input, output) {
     # 
     # 
     df.test=df.quant %>%  group_by(quant) %>%
-      summarize(minX = min(x),
+      dplyr::summarize(minX = min(x),
                 maxX = max(x))
     
     ggplot()+
