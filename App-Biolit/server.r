@@ -126,14 +126,14 @@ server <- function(input, output) {
     req(input$sel_spe) # Requiert une valeur de sites
     DF_bio2=DF_bio %>% filter(Spe %in% input$sel_spe)
     
-    p1=ggplot(data=DF_bio2,aes(recouv,Val, col=Spe))+
+    p1=ggplot(data=DF_bio2,aes(recouv,val.scaled, col=Spe))+
       # geom_jitter()+
       geom_smooth(aes(group=Spe), method='loess')+
       theme_minimal()+
       ylab('Fréquence des abondances (%)')+
       xlab('Classe de recouvrement')
     
-    p2=ggplot(data=DF_bio2,aes(substrat3,as.numeric(Val), col=Spe))+
+    p2=ggplot(data=DF_bio2,aes(substrat3,as.numeric(val.scaled), col=Spe))+
       # geom_jitter()+
       stat_summary( aes(group=Spe, col=Spe),fun.y=mean, geom="line",size=1.5)+
       # scale_y_log10()+
