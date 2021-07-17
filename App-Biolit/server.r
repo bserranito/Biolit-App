@@ -1,4 +1,3 @@
-#list of packages required
 list.of.packages <- c("shiny","dplyr","ggplot2","reshape2","ggpubr","Rcpp","units","Hmisc")
 
 #checking missing packages from list
@@ -44,7 +43,7 @@ server <- function(input, output) {
     # 
     df.test=df.quant %>%  group_by(quant) %>%
       dplyr::summarize(minX = min(x),
-                maxX = max(x))
+                       maxX = max(x))
     
     ggplot()+
       geom_rect(data=df.test,aes(xmin=minX, xmax=maxX, ymin=-.5,ymax=.5 , fill=quant))+
@@ -69,25 +68,25 @@ server <- function(input, output) {
             axis.text.x=element_text(size=12),
             axis.text.y=element_blank())+
       ylab('')+ xlab(paste0('gradient de la variable (',unit,')'))
-    
-    
-    
-    
-    # ggplot()+
-    #     # geom_density(data=DATA,aes(Inor), alpha=.4)+
-    #     geom_line(data=df.quant,aes(x,y), size=1)+
-    #     geom_ribbon(data=df.quant,aes(x=x,ymin=0, ymax=y, fill=quant))+
-    #     # scale_x_continuous(breaks=quantiles) + 
-    #     # scale_fill_brewer(guide="none", palette="Spectral", direction=-1)+
-    #     theme_light()+
-    #      geom_vline(data=Sel.var, aes(xintercept=Sel.var[,2], col=Abb), linetype=2, size=1.5)+
-    #     scale_fill_brewer(direction=-1)+
-    #     guides(fill=F)+
-    #     # geom_vline(xintercept=(DF.tar$SST.M), linetype=2, size=1, col='red')+
-    #     # scale_fill_brewer(direction=-1)+
-    #     ylab('')+
-    #     xlab('')
   })
+  
+  
+  
+  # ggplot()+
+  #     # geom_density(data=DATA,aes(Inor), alpha=.4)+
+  #     geom_line(data=df.quant,aes(x,y), size=1)+
+  #     geom_ribbon(data=df.quant,aes(x=x,ymin=0, ymax=y, fill=quant))+
+  #     # scale_x_continuous(breaks=quantiles) + 
+  #     # scale_fill_brewer(guide="none", palette="Spectral", direction=-1)+
+  #     theme_light()+
+  #      geom_vline(data=Sel.var, aes(xintercept=Sel.var[,2], col=Abb), linetype=2, size=1.5)+
+  #     scale_fill_brewer(direction=-1)+
+  #     guides(fill=F)+
+  #     # geom_vline(xintercept=(DF.tar$SST.M), linetype=2, size=1, col='red')+
+  #     # scale_fill_brewer(direction=-1)+
+  #     ylab('')+
+  #     xlab('')
+  
   # # Plot 2
   # output$bioPlot <- renderPlot({
   #   
@@ -120,7 +119,7 @@ server <- function(input, output) {
   # Plot 3
   output$Estran_plot <- renderPlot({
     
-  
+    
     
     
     req(input$sel_spe) # Requiert une valeur de sites
@@ -131,7 +130,8 @@ server <- function(input, output) {
       geom_smooth(aes(group=Spe), method='loess')+
       theme_minimal()+
       ylab('Fréquence des abondances (%)')+
-      xlab('Classe de recouvrement')
+      xlab('Classe de recouvrement')+
+      guides(col=guide_legend(title="Taxons"))
     
     p2=ggplot(data=DF_bio2,aes(substrat3,as.numeric(val.scaled), col=Spe))+
       # geom_jitter()+
@@ -140,10 +140,46 @@ server <- function(input, output) {
       stat_summary( fun.data="mean_cl_normal",size=2)+
       theme_minimal()+
       ylab('Fréquence des abondances (%)')+
-      xlab('Ceinture algues brunes')
+      xlab('Ceinture algues brunes')+
+      guides(col=guide_legend(title="Taxons"))
+    
     
     ggpubr::ggarrange(p1,p2, ncol=1, common.legend=T)# mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
   })
+  
+  
+  # Plot 4
+  output$Rank_species <- renderPlot({
+    
+    
+    req(input$Site_compo,input$data_type)
+    
+    p.label=data.frame(value='Abondance moyenne(ind/m²)',
+                       PA='Fréquence occurrence (%)')
+    
+    lab.y=get(input$data_type,p.label) # Récupération de l'unité de la variable selectionnée
+    
+    
+    DF_bio_site= DF_bio %>% filter(Abb %in% input$Site_compo) %>%
+      group_by(substrat3, Spe) %>%
+      dplyr::summarize(count= n(),
+                       M=mean(eval(as.symbol(input$data_type)), na.rm=F),
+                       SD=sd(eval(as.symbol(input$data_type)), na.rm=F))%>%
+      group_by(substrat3) %>%
+      mutate(rank = dense_rank(-M)) %>% mutate(count2=paste0('n=',count))
+    
+    
+    ggplot(DF_bio_site,aes(as.factor(rank), M))+
+      geom_bar(stat='identity',aes(fill=Spe), col='black',  position = position_dodge(width = 1))+
+      # geom_errorbar(aes(ymin=M-SD, ymax=M+SD), width=.2)+
+      facet_grid(.~substrat3, scale="free_y")+
+      # scale_y_log10()+
+      guides(fill=guide_legend(title="Taxons"))+
+      scale_fill_brewer(palette="Spectral")+
+      ylab(lab.y)  +
+      geom_text( aes(x=max(rank)-.2, y=max(M), label=count2))+
+      theme_light()+
+      xlab('rang des taxons')
+    
+  })
 }
-
-

@@ -30,25 +30,6 @@ ui <- fluidPage(
                
                mainPanel( plotOutput(outputId = "ParamPlot")))),
     
-    # 
-    # tabPanel(title="Données biologiques",
-    #          sidebarLayout(
-    #              sidebarPanel(
-    #  radioButtons('Var_resp', h3('Selection de la variabiable Bio'),
-    #                              choices=list('Abondance Totale'='Tot',
-    #                                           'Richesse Specifique'='S')),
-    #  selectInput("Sites_Ab", h2("Choisir les sites"),
-    #              choices=list("St-Jacut"=c("IDB","ILC"),
-    #                           "FON"="FON",
-    #                           "EVE"="EVE",
-    #                           "ADG"="ADG",
-    #                           "LI"="LI",
-    #                           "GC","GC",
-    #                           "HSE","HSE"), selected='SEN', multiple=T)),
-    #  
-    #  mainPanel(plotOutput(outputId = "bioPlot"))
-    #          )),
-    
     tabPanel(title="Sur l'estran...",
              fluidRow(
                column(3,
@@ -65,7 +46,24 @@ ui <- fluidPage(
                
                # column(4,
                #        img(src ="estran_zonation.png", height = 400, width = 250))
-             ))
+             )),
+    tabPanel(title = "Composition taxonomique",
+             # Sidebar with a slider input for number of bins 
+             sidebarLayout(
+               sidebarPanel(
+                 radioButtons('data_type', h3('Selection du paramètre de composition:'),
+                              choices=list('Abondances'='value',
+                                           'Probabilité d occurrence'='PA')),
+                 selectInput("Site_compo", h2("Choisir les sites"),
+                             choices=list("St-Jacut"=c("IDB","ILC"),
+                                          "FON"="FON",
+                                          "EVE"="EVE",
+                                          "ADG"="ADG",
+                                          "LI"="LI",
+                                          "GC","GC",
+                                          "HSE","HSE"), selected=NULL, multiple=F)),
+               
+               mainPanel(plotOutput(outputId = "Rank_species"))))
     # sidebarLayout(
     #             sidebarPanel(radioButtons('Var_resp', h3('Selection de la variabiable Bio'),
     #                                      choices=list('Abondance Totale'='Tot',
