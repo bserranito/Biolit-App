@@ -1,3 +1,4 @@
+#list of packages required
 list.of.packages <- c("shiny","dplyr","ggplot2","reshape2","ggpubr","Rcpp","units","Hmisc")
 
 #checking missing packages from list
@@ -160,6 +161,7 @@ server <- function(input, output) {
     lab.y=get(input$data_type,p.label) # Récupération de l'unité de la variable selectionnée
     
     
+    # Composition station
     DF_bio_site= DF_bio %>% filter(Abb %in% input$Site_compo) %>%
       group_by(substrat3, Spe) %>%
       dplyr::summarize(count= n(),
@@ -168,8 +170,17 @@ server <- function(input, output) {
       group_by(substrat3) %>%
       mutate(rank = dense_rank(-M)) %>% mutate(count2=paste0('n=',count))
     
+    #Composition totale
+    DF_bio_tot= DF_bio %>%
+      group_by(substrat3, Spe) %>%
+      dplyr::summarize(count= n(),
+                       M=mean(eval(as.symbol(input$data_type)), na.rm=F),
+                       SD=sd(eval(as.symbol(input$data_type)), na.rm=F))%>%
+      group_by(substrat3) %>%
+      mutate(rank = dense_rank(-M)) %>% mutate(count2=paste0('n=',count))
     
-    ggplot(DF_bio_site,aes(as.factor(rank), M))+
+    
+    comp1=ggplot(DF_bio_site,aes(as.factor(rank), M))+
       geom_bar(stat='identity',aes(fill=Spe), col='black',  position = position_dodge(width = 1))+
       # geom_errorbar(aes(ymin=M-SD, ymax=M+SD), width=.2)+
       facet_grid(.~substrat3, scale="free_y")+
@@ -179,7 +190,25 @@ server <- function(input, output) {
       ylab(lab.y)  +
       geom_text( aes(x=max(rank)-.2, y=max(M), label=count2))+
       theme_light()+
-      xlab('rang des taxons')
+      xlab('rang des taxons')+
+      ggtitle("Composition de l'estran choisi")
+    
+    
+    comp2=ggplot(DF_bio_tot,aes(as.factor(rank), M))+
+      geom_bar(stat='identity',aes(fill=Spe), col='black',  position = position_dodge(width = 1))+
+      # geom_errorbar(aes(ymin=M-SD, ymax=M+SD), width=.2)+
+      facet_grid(.~substrat3, scale="free_y")+
+      # scale_y_log10()+
+      guides(fill=guide_legend(title="Taxons"))+
+      scale_fill_brewer(palette="Spectral")+
+      ylab(lab.y)  +
+      geom_text( aes(x=max(rank)-1, y=max(M), label=count2))+
+      theme_light()+
+      xlab('rang des taxons')+
+      ggtitle("Composition de l'ensemble des stations")
+    
+    
+    ggpubr::ggarrange(comp1,comp2, ncol=1, common.legend=T)#
     
   })
 }
