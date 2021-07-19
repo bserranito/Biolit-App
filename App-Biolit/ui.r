@@ -8,6 +8,7 @@ ui <- fluidPage(
   # Application title
   titlePanel(div(img(src = "planete-mer.jpg", height = 100, width = 100),
                  img(src = "mnhn.jpg", height = 100, width = 100),
+                 img(src = "logo BioLit.jpg", height = 80, width = 150),
                  h1( "Données Biolit visualisation"))),
   
   tabsetPanel(
