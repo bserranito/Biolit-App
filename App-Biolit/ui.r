@@ -63,7 +63,9 @@ ui <- fluidPage(
                                           "GC","GC",
                                           "HSE","HSE"), selected=NULL, multiple=F)),
                
-               mainPanel(plotOutput(outputId = "Rank_species"))))
+               mainPanel(plotOutput(outputId = "Rank_species"),
+                         p(h1("Description: blablabla?")))),
+             )
     # sidebarLayout(
     #             sidebarPanel(radioButtons('Var_resp', h3('Selection de la variabiable Bio'),
     #                                      choices=list('Abondance Totale'='Tot',
