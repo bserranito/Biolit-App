@@ -27,9 +27,12 @@ ui <- fluidPage(
                                           "ADG"="ADG",
                                           "LI"="LI",
                                           "GC","GC",
-                                          "HSE","HSE"), selected=NULL, multiple=T)),
+                                          "HSE","HSE"), selected=NULL, multiple=T),
+                 img(src='Carte_panel1.png', align = "left")),
                
-               mainPanel( plotOutput(outputId = "ParamPlot")))),
+               mainPanel( plotOutput(outputId = "ParamPlot"),
+                          
+               ))),
     
     tabPanel(title="Sur l'estran...",
              fluidRow(
