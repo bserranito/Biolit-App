@@ -56,7 +56,7 @@ server <- function(input, output) {
                                     xend=as.numeric(as.character(Val)),
                                     y=0, yend=-.5, col=Abb),
                    arrow = arrow(length = unit(0.5, "cm")),
-                   size=2,
+                   size=1.5,
                    lineend = c('round'),
                    linejoin = c('mitre'))+ # Vecteur déterminant la valeur de la station
       guides(col=guide_legend(title="Site"))+

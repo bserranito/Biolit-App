@@ -27,6 +27,7 @@ ui <- fluidPage(
                                           "ADG"="ADG",
                                           "LI"="LI",
                                           "GC","GC",
+                                          "PDF"="PDF",
                                           "HSE","HSE"), selected=NULL, multiple=T)),
                  # img(src='Carte_panel1.png', align = "left")),
                
