@@ -6,9 +6,9 @@
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   # Application title
-  titlePanel(div(img(src = "planete-mer.jpg", height = 100, width = 100),
+  titlePanel(div(img(src = "logo BioLit.jpg", height = 80, width = 150),
+                 img(src = "planete-mer.jpg", height = 100, width = 100),
                  img(src = "mnhn.jpg", height = 100, width = 100),
-                 img(src = "logo BioLit.jpg", height = 80, width = 150),
                  h1( "Données Biolit visualisation"))),
   
   tabsetPanel(
@@ -27,10 +27,11 @@ ui <- fluidPage(
                                           "ADG"="ADG",
                                           "LI"="LI",
                                           "GC","GC",
-                                          "HSE","HSE"), selected=NULL, multiple=T),
-                 img(src='Carte_panel1.png', align = "left")),
+                                          "HSE","HSE"), selected=NULL, multiple=T)),
+                 # img(src='Carte_panel1.png', align = "left")),
                
                mainPanel( plotOutput(outputId = "ParamPlot"),
+                          plotOutput(outputId = "RadarPlot")
                           
                ))),
     

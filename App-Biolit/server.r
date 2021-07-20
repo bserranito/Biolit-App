@@ -73,6 +73,30 @@ server <- function(input, output) {
   })
   
   
+  ## Plot 2 
+  output$RadarPlot <- renderPlot({
+
+
+    df.radar3=df.radar2 %>% filter(Abb %in% input$Sites)
+
+
+    ggplot()+
+      geom_hline(yintercept=c(0.5,1), linetype=2, col='grey40')+
+      geom_polygon(data=df.radar3,aes(Var,Mval, group=Abb, fill=Abb),alpha=.2, col='black')+
+      # geom_line(col='black')+
+      geom_point(data=df.radar3,aes(Var,Mval,fill=Abb),shape=21, size=4)+
+      geom_text(data=df.radarVal,aes(Var,y=as.numeric(as.character(Perc)),label=as.character(ValPerc)), size=3.5, col='grey60')+
+      coord_polar()+
+      theme_minimal()+
+      theme(axis.text.x = element_text(size=11, face='bold'),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank())+
+
+      # scale_x_discrete(labels=c("hESC1","hESC2","hESC3","hESC4"))+
+      xlab('') + ylab('')
+
+  })
+  
   
   # ggplot()+
   #     # geom_density(data=DATA,aes(Inor), alpha=.4)+
