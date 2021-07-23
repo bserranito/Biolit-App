@@ -17,7 +17,9 @@ ui <- fluidPage(
              sidebarLayout(
                sidebarPanel(
                  selectInput("variable", h2("Choix du parametre"),
-                             choices=list("Temp moy"='SST.M',
+                             choices=list("Temp moy"='SST',
+                                          "Temp du mois le plus froid"="SSTco",
+                                          "Matière en suspension"="TSM",
                                           'Sal'='Sal',
                                           "Nitrate"='Nit'), selected='Bat'),
                  selectInput("Sites", h2("Choisir les sites"),
@@ -32,7 +34,8 @@ ui <- fluidPage(
                  # img(src='Carte_panel1.png', align = "left")),
                
                mainPanel( plotOutput(outputId = "ParamPlot"),
-                          plotOutput(outputId = "RadarPlot")
+                          plotOutput(outputId = "RadarPlot"),
+                          plotOutput(outputId = "Site_identity"),
                           
                ))),
     

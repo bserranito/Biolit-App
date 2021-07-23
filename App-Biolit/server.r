@@ -1,5 +1,5 @@
 #list of packages required
-list.of.packages <- c("shiny","dplyr","ggplot2","reshape2","ggpubr","Rcpp","units","Hmisc","lifecycle")
+list.of.packages <- c("shiny","dplyr","ggplot2","reshape2","ggpubr","Rcpp","units","Hmisc","lifecycle","gridExtra","grid")
 
 #checking missing packages from list
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -16,6 +16,8 @@ library(ggpubr)
 library(Rcpp)
 library(Hmisc)
 library(lifecycle)
+library(gridExtra)
+library(grid)
 
 load('Biolit_app_datasets.RData')
 
@@ -112,6 +114,28 @@ server <- function(input, output) {
   #     # scale_fill_brewer(direction=-1)+
   #     ylab('')+
   #     xlab('')
+  
+  ## Plot 2
+  output$Site_identity <- renderPlot({
+
+    # mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
+    france.form <- raster::getData(name="GADM", country="FRA", level=0)
+    france=fortify(france.form)
+    
+    
+    DF=DF%>% mutate(Vern.lab=paste0(Abb,'=',Vern))
+    
+    df.geo3=DF %>% filter(Abb %in% input$Sites)
+    
+    ggplot()+
+      geom_polygon(data=france, aes(long,lat,group=group),colour="black", fill='grey70', size=.5)+
+      geom_point(data=DF,aes(longit,lat),fill='Black', shape=21,size=5)+
+      geom_point(data=df.geo3,aes(longit,lat, fill=Abb), shape=21, size=9)+
+      geom_label_repel(data=df.geo3,aes(longit,lat, label=Vern.lab), size=8)+
+      coord_cartesian(xlim=c(-5,2), ylim=c(45,50.5))+
+      guides(fill=F)+
+      theme_void()
+  })
   
   # # Plot 2
   # output$bioPlot <- renderPlot({
