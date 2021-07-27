@@ -16,12 +16,12 @@ ui <- fluidPage(
              # Sidebar with a slider input for number of bins 
              sidebarLayout(
                sidebarPanel(
-                 selectInput("variable", h2("Choix du parametre"),
-                             choices=list("Temp moy"='SST',
-                                          "Temp du mois le plus froid"="SSTco",
-                                          "Matière en suspension"="TSM",
-                                          'Sal'='Sal',
-                                          "Nitrate"='Nit'), selected='Bat'),
+                 # selectInput("variable", h2("Choix du parametre"),
+                 #             choices=list("Temp moy"='SST',
+                 #                          "Temp du mois le plus froid"="SSTco",
+                 #                          "Matière en suspension"="TSM",
+                 #                          'Sal'='Sal',
+                 #                          "Nitrate"='Nit'), selected='Bat'),
                  selectInput("Sites", h2("Choisir les sites"),
                              choices=list("St-Jacut"=c("IDB","ILC"),
                                           "FON"="FON",
@@ -30,18 +30,21 @@ ui <- fluidPage(
                                           "LI"="LI",
                                           "GC","GC",
                                           "PDF"="PDF",
-                                          "HSE","HSE"), selected=NULL, multiple=T)),
+                                          "HSE","HSE"), selected=NULL, multiple=T),
                  # img(src='Carte_panel1.png', align = "left")),
+               h2("Situation géographique du site"),
+                 plotOutput(outputId = "Site_identity")),
                
-               mainPanel( plotOutput(outputId = "ParamPlot"),
+               mainPanel( 
+                 # plotOutput(outputId = "ParamPlot"),
                           plotOutput(outputId = "RadarPlot"),
-                          plotOutput(outputId = "Site_identity"),
+                          # plotOutput(outputId = "Site_identity"),
                           
                ))),
     
     tabPanel(title="Sur l'estran...",
-             fluidRow(
-               column(3,
+             sidebarLayout(
+               sidebarPanel(
                       selectInput("sel_spe", h4("Choisir le/les espèces"),
                                   choices=list("Monodonte (P.lineatus)"="monodonte",
                                                "Gibbule ombiliquée (S.umbilicalis)"="gibbuleombi",
@@ -50,9 +53,8 @@ ui <- fluidPage(
                                                "Littorines des rochers (Littorina saxatilis)"="lit.comp.saxa",
                                                "calliostome (Calliostoma zizyphinum)"="calliostome"),
                                   selected=NULL, multiple=T)),
-               column( 8,
-                       plotOutput(outputId="Estran_plot"))
-               
+               mainPanel(plotOutput(outputId="Estran_plot"),
+           DT::dataTableOutput('table_spe')),
                # column(4,
                #        img(src ="estran_zonation.png", height = 400, width = 250))
              )),
@@ -70,7 +72,9 @@ ui <- fluidPage(
                                           "ADG"="ADG",
                                           "LI"="LI",
                                           "GC","GC",
-                                          "HSE","HSE"), selected=NULL, multiple=F)),
+                                          "HSE","HSE"), selected=NULL, multiple=F),
+                 h2("Situation géographique du site"),
+                 plotOutput(outputId = "Site_identity_compo")),
                
                mainPanel(plotOutput(outputId = "Rank_species"),
                          p(h1("Description: blablabla?")))),
