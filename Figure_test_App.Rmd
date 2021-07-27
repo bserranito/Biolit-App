@@ -1,0 +1,477 @@
+---
+title: "Figure_test_App-Biolit"
+author: "Serranito Bruno"
+date: "09/07/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+rm(list=ls())
+library(shiny)
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+library(tidyr)
+library(raster)
+library(vegan)
+library(scales)
+```
+
+
+```{r}
+
+
+
+# Chargement des bases de données Abondance + Pred
+load('Biolit_Ab.RData')
+load('Biolit_Pred.RData')
+
+
+
+
+
+
+# Préparation Pred
+Pred3= Pred2 %>% select(-Cover)
+DF=cbind(df3,Pred3) %>% select(Abb, colnames(Pred3)) %>%  distinct() %>% group_by(Abb) %>%
+  summarise_at(colnames(Pred3), mean) 
+
+# Préparation Bio
+StJacu=df3 %>%
+    mutate(N.couv = case_when(recouv %in% c("4","5") ~ "Forte couverture",
+                              recouv %in% c("2","3") ~ "Moyenne couverture",
+                              TRUE ~ "Faible couverture"))     %>% 
+mutate(Tot=bigorneau+ calliostome+gibbulecomm+gibbuleombi+lit.comp.saxa+
+                   littospp+monodonte+nasse+pourpre+patelle) 
+    # mutate(Site=rep('All',nrow(df3)))
+
+```
+
+# Figure boxplot 
+```{r}
+
+
+        
+          Var=unlist(DF[,'Nit'])
+
+        Sel.var=as.data.frame(as.matrix(DF[which(DF$Abb %in% 'ADG'),c('Abb','Nit')]))        # 
+ probs <- c(.25,.5, 0.75)
+ 
+ 
+        dens <- density(Var)
+        df.quant=data.frame(x=dens$x, y=dens$y)
+        quantiles <- quantile(Var, prob=probs)
+        df.quant$quant <- factor(findInterval(dens$x,quantiles))
+        
+        df.test=df.quant %>%  group_by(quant) %>%
+        summarize(minX = min(x), 
+        maxX = max(x))
+        
+
+        
+        
+        ggplot()+
+          geom_rect(data=df.test,aes(xmin=minX, xmax=maxX, ymin=-.5,ymax=.5 , fill=quant))+
+          # geom_jitter(data=DF,aes(SST.M,y=0), shape=21, fill='grey')+
+          # geom_boxplot(data=DF,aes(Nit), width=1, alpha=.4)+
+          scale_fill_brewer(direction=1,name = "Distribution \n des valeurs", labels = c("0-25%", "25-50%",                        "50-75%","75-100%"))+
+          
+          # geom_vline(data=Sel.var, aes(xintercept=Sel.var[,2], col=Abb), linetype=6, size=1)+
+          # geom_vline(aes(xintercept=quantiles))+
+          geom_hline(yintercept=-0.50,size=1.5)+
+          geom_vline(data=Sel.var,aes(xintercept=as.numeric(as.character(Sel.var[,2]))), 
+                     arrow = arrow(length = unit(0.5, "cm")))+
+          geom_segment(data=Sel.var,aes(x=as.numeric(as.character(Sel.var[,2])),
+                                        xend=as.numeric(as.character(Sel.var[,2])), y=0, yend=-.5),
+                       arrow = arrow(length = unit(0.5, "cm")), size=2,  lineend = c('round'),
+                       linejoin = c('mitre'))+ # Vecteur déterminant la valeur de la station
+          guides(col=guide_legend(title="Site"))+
+          # scale_fill_discrete(name = "Distribution", labels = c("0-25%", "25-50%", "50-75%"))+
+          theme(panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                panel.border = element_blank(),
+                panel.background = element_blank(),
+                axis.ticks.length=unit(0.2,"inch"),
+                axis.ticks.y=element_blank(),
+                axis.text.x=element_text(size=12))+
+          ylab('')
+        
+ 
+
+
+        
+        
+        ggplot()+
+          # geom_density(data=DATA,aes(Inor), alpha=.4)+
+          geom_line(data=df.quant,aes(x,y), size=1)+
+          geom_ribbon(data=df.quant,aes(x=x,ymin=0, ymax=y, fill=quant))+
+          # scale_x_continuous(breaks=quantiles) + 
+          # scale_fill_brewer(guide="none", palette="Spectral", direction=-1)+
+          theme_light()+
+          geom_vline(data=Sel.var, aes(xintercept=Sel.var[,2], col=Abb), linetype=2, size=1.5)+
+          scale_fill_brewer(direction=-1)+
+          guides(fill=F)+
+          # geom_vline(xintercept=(DF.tar$SST.M), linetype=2, size=1, col='red')+
+          # scale_fill_brewer(direction=-1)+
+          ylab('')+
+          xlab('')
+```
+
+Abondance / recouvrement
+```{r}
+library(reshape2)
+library(ggpubr)
+
+df3$substrat3 = with(df3, factor(substrat3, levels =
+c('Pel','Fspir','Fvesi','Anodo','Fser')))
+
+DF_bio=melt(df3, id.var=c('Abb','AAAA','substrat3','date','longit', 'lat', 'recouv'), var='Spe')
+# DF_bio=dcast(Abb + longit+lat+ date+ recouv + substrat3 + AAAA ~ Spe, data=df3, value.var='ab')
+DF_bio=DF_bio %>% group_by( Spe) %>% mutate(Val=scale(value))
+
+DF_bio2=DF_bio %>% filter( Spe %in% c('Patelle','monodonte'))
+
+
+
+p1=ggplot(data=DF_bio2,aes(recouv,Val, col=Spe))+
+  # geom_jitter()+
+  geom_smooth(aes(group=Spe), method='loess')+
+  theme_minimal()+
+  ylab('Fréquence des abondances (%)')+
+  xlab('Classe de recouvrement')
+
+p2=ggplot(data=DF_bio2,aes(substrat3,as.numeric(Val), col=Spe))+
+  # geom_jitter()+
+ stat_summary( aes(group=Spe, col=Spe),fun.y=mean, geom="line",size=1.5)+
+  # scale_y_log10()+
+ stat_summary( fun.data="mean_cl_normal",size=2)+
+  theme_minimal()+
+  ylab('Fréquence des abondances (%)')+
+  xlab('Ceinture algues brunes')
+
+ggarrange(p1,p2, ncol=1, common.legend=T)
+
+```
+
+# Classement des espèces les plus abondantes/ occurrentes
+```{r}
+rm=list(ls())
+load('Biolit_app_datasets.RData')
+
+
+DF_bio_site= DF_bio %>% filter(Abb %in% 'KIB') %>%
+      group_by(substrat3, Spe) %>%
+  dplyr::summarize(count= n(),
+            M=mean(PA, na.rm=T),
+            SD=sd(PA, na.rm=T))%>%
+  group_by(substrat3) %>%
+  mutate(rank = dense_rank(-M))
+
+
+ggplot(DF_bio_site,aes(as.factor(rank), M))+
+  geom_bar(stat='identity',aes(fill=Spe), col='black',  position = position_dodge(width = 1))+
+   # geom_errorbar(aes(ymin=M-SD, ymax=M+SD), width=.2)+
+  facet_grid(.~substrat3, scale="free_y")+
+annotate("text", x = 10, y = 0.9, label = paste0("n=",count[1]))+
+# scale_y_log10()+
+  guides(fill=guide_legend(title="Taxons"))+
+      scale_fill_brewer(palette="Spectral")+
+        ylab("Abondance moyenne(ind/m²)")+theme_light()+
+  xlab('rang des taxons')
+
+  
+```
+
+# calcul de diversité
+```{r}
+
+rm=list(ls())
+load('Biolit_app_datasets.RData')
+
+
+# df4=df3 %>% select(bigorneau, calliostome, gibbulecomm, gibbuleombi,lit.comp.saxa,littospp,monodonte,
+#                    nasse,pourpre,patelle)  
+# 
+# df3$Sha=diversity(df4,'shannon')
+
+
+df_sha1=df3 %>% filter(Abb == "SJS") %>% mutate(where=rep('site'))
+geo1=unique(df_sha1[which(df_sha1$Abb == "SJS"),]$Grp_geo)
+
+df_sha2=df3 %>% filter(Grp_geo == geo1) %>% mutate(where=rep('region'))
+
+DF_SHA=rbind(df_sha1,df_sha2)
+
+ggplot(data=DF_SHA,aes(substrat3,Sha, fill=where))+
+  geom_boxplot()+
+  geom_jitter(shape=21)
+
+
+```
+
+# ggradar
+```{r}
+load('Biolit_app_datasets.RData')
+library(ggradar)
+library(scales)
+
+df.radar=data.frame(cbind(Abb=df3$Abb,Pred3))
+df.radar2=df.radar %>%
+mutate_at(vars(-Abb), rescale) %>%
+ gather(Var,value,-Abb) %>%
+  group_by(Abb,Var)%>%
+  dplyr::summarize(Mval=mean(value)) %>%
+  filter(Abb %in% c('KIB','ADG','PDC'))
+
+    probs <- c(.25,.5, 0.75)
+    
+df.radarVal=df.radar %>%
+     gather(Var,value,-Abb) %>%
+     group_by(Var)%>%
+     dplyr::summarize('0.50'=round((min(value)+ (max(value)-min(value))*.5),1),
+                      '1'=round(max(value),1)) %>% gather(Perc,ValPerc,-Var)
+  
+  
+  
+ggplot()+
+  geom_hline(yintercept=c(0.5,1), linetype=2, col='grey40')+
+  geom_polygon(data=df.radar2,aes(Var,Mval, group=Abb, fill=Abb),alpha=.2, col='black')+
+  # geom_line(col='black')+
+  geom_point(data=df.radar2,aes(Var,Mval,fill=Abb),shape=21, size=4)+
+  geom_text(data=df.radarVal,aes(Var,y=as.numeric(as.character(Perc)),label=as.character(ValPerc)), size=3.5, col='grey60')+
+  coord_polar()+
+  theme_minimal()+
+  theme(axis.text.x = element_text(size=11, face='bold'),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())+
+  
+  # scale_x_discrete(labels=c("hESC1","hESC2","hESC3","hESC4"))+
+  xlab('') + ylab('')
+
+
+
+
+library(ggradar)
+library(dplyr)
+library(scales)
+library(tibble)
+
+mtcars_radar <- mtcars %>% 
+  as_tibble(rownames = "group") %>% 
+  mutate_at(vars(-group), rescale) %>% 
+  tail(4) %>% 
+  dplyr::select(1:10)
+
+ggradar(mtcars_radar)
+```
+
+# add map to identify sites
+```{r}
+
+load('Biolit_app_datasets.RData')
+
+library(gridExtra)
+library(ggpubr)
+library(grid)
+france.form <- raster::getData(name="GADM", country="FRA", level=0)
+france=fortify(france.form)
+
+
+DF=DF%>% mutate(Vern.lab=paste0(Abb,'=',Vern))
+
+df.geo3=DF %>% filter(Abb %in% c('HSE','PDF'))
+
+ggplot()+
+   geom_polygon(data=france, aes(long,lat,group=group),colour="black", fill='grey70', size=.5)+
+   geom_point(data=DF,aes(longit,lat),fill='Black', shape=21,size=5)+
+  geom_point(data=df.geo3,aes(longit,lat, fill=Abb), shape=21, size=9)+
+  geom_label_repel(data=df.geo3,aes(longit,lat, label=Vern.lab), size=8)+
+     coord_cartesian(xlim=c(-5,2), ylim=c(45,50.5))+
+  guides(fill=F)+
+  theme_void()
+```
+
+
+# test lecture application github
+```{r}
+runGitHub("Biolit-App", "serranito-bruno", subdir="App-Biolit", ref="main")
+
+runGitHub("shiny_example", "rstudio")
+
+# fac=factor(c(2,3,4,6))
+# gh=as.numeric(as.character(c(2,3,4,6)))
+```
+
+
+# savegarde des bases de données formatées
+
+```{r}
+# Chargement des bases de données Abondance + Pred
+load('Biolit_Ab.RData')
+load('Biolit_Pred.RData')
+load('Estran.abb.RData')
+
+# Ajout des sites 
+Est.abb2=rbind(Est.abb,c('Chausey-Houston SE','HSE'),c('Chausey-Grande Corbière','GC'),c('Chausey-Port Marie','PM'),c('Chausey-Longue Ile','LI'))
+
+
+
+# Préparation Pred
+Pred3= Pred2 %>% dplyr::select(-Cover) %>% rename(Chloa='Chloa_new.mean',
+                                            TSM='TSM.M')%>% 
+  mutate(SST=0.01*(SST.M),
+  SSTco=0.01*SSTcold) %>% dplyr::select(-SST.M,-SSTcold)
+
+
+DF=cbind(df3,Pred3) %>% dplyr::select(Abb,longit,lat, colnames(Pred3)) %>%  distinct()%>% group_by(Abb) %>%
+  summarise_at(c('longit','lat',colnames(Pred3)), mean) 
+
+DF=merge(DF, Est.abb2, by='Abb') %>% rename(Vern='V1')
+
+
+# Ajout des noms verniculaires
+
+              
+# ADG: “Anse Du Gesclin”, AUD: “Audresselles”, AYT: “Aytre”, BAS: “La Bastille”, BDM: “Baie des Marsoins”, BFB: “Bas Fort Blanc”. BOU: “Les Boucholeurs”, BRE: “Bretteville”, BSM: “Blainville-sur-mer”, CAB: “Cabellou”, CAL: “Cale”, CDB: “Chef de Baie”, CDG: “Cale de Gornevez”, CDS: “Concheau de Suzac”, CFR: “Cap Fréhel”, DEL: “Dellec”, DJO: “Dame jouanne”, EVE: “L’Eventail”, FOG: “Fogeo”, FON: “Fort National”, GC:  “Grande Corbière – Chausey »” , GLE: “Glénan (Saint-Nicolas)”, GRB: “Grand Bé”, HSE: “Houston SE – Chausey”, IBO: “Ile de Boed”, IDB: “Iles des Ebihens”, IDU: “Ile Dumet”, ILB: “Ile de Bailleron”, ILC: “Ilot de la Colombière”,ILM: “Iles aux Mouettes”, ISL: “L’Islet”, ISM: “Ilot Saint-Michel”, IVE: “Ile Verte”, KCD: “Kercouedo”, KER: “Kermorvan”, KIB: “KignerBell”, LI: “Longue Ile – Chausey”, LOI: “Loix”, MIN: “Les Minimes”, PAG: “Pors-Ar-Goret”,  PDA: “Pointe de l’Arcouest”, PDC: “Pointe du Chay”, PDF: “Pointe de la Fumée”, PDL: “Pointe de la Loge”, PDP: “Pointe des Prouards”, PEA: “Petit Ailly”, PEG: “Père Gus”, PEN: “Penvins”, PIE: “Piegu”, PIS: “La Piscine”,  PLA: “Platin”, PM: “Port Marie –Chausey” , PNA: “Port Navalo”, POC: “Pont de la Chaume”, PPL: “Pointe du Plomb”, QUI: “Quiberville”, ROP: “Roche Percée”, ROV:  “Roche Vilaine”, SEN: “Saint-Enogat”, SGB: “Saint Guirec/Bastille”, SGO: “Saint Goustan”, SJS: “Saint Jean-des-Sables”, SMM: “Sainte Marguerite-sur-mer”, SNE: “Sud Nellière”, TAR: “La Tara”, TAT: “Tatihou”, TRE: “Trenez”, VEC: “Vert-clos”)
+
+DF.unit=data.frame(Bath_unit='m',Pop_unit='popoulo',Nit_unit='µg/ml',Sal_unit=NA,
+                   Chloa_new.mean_unit='mg.m-3',SSTco_unit='°C',SST_unit='°C',
+                   WE_unit='truc',WKE_unit='N.m².s-1',TAMP_unit='m', TSM_unit="mg.l-1")
+
+# Préparation Bio
+df3=df3 %>%
+  mutate(N.couv = case_when(recouv %in% c("4","5") ~ "Forte couverture",
+                            recouv %in% c("2","3") ~ "Moyenne couverture",
+                            TRUE ~ "Faible couverture"))     %>% 
+  mutate(Tot=bigorneau+ calliostome+gibbulecomm+gibbuleombi+lit.comp.saxa+
+           littospp+monodonte+nasse+pourpre+patelle) %>%
+  mutate(Grp_geo=case_when(Abb %in% c('SMM','QUI','BFB','TAT','PDL','BRE','CAL','BSM','PEG','PEA') ~"Ma",
+         Abb %in% c('GC','PM','HSE','LI','ADG','FON','GRB','SEN','EVE','DJO','ISL','SNE','CFR','ISM','ILC','PIS','IDB','PIE') ~'BreNE', Abb %in% c('BAS','SGB','KIB','IVE','PDA','PAG','DEL') ~'BreNO', # DEL est une station en mer d'Iroise
+Abb %in% c('CAB','GLE','TRE','IBO','ILB','CDG','KCD','FOG','IDU','BDM','SGO',
+           'TAR','PEN','ROP','ROV','PNA','KER') ~'BreS',
+Abb %in% c('CDB','MIN','LOI','PDC','VEC','PDP','POC','PDF','SJS','PLA','ILM','BOU','AYT',
+           'CDS','CDS') ~'Char',
+TRUE ~'NA'))
+
+
+# Check des stations non attribué à un groupe
+dfNA=df3[which(df3$Grp_geo == 'NA'),]
+
+
+
+df.geo=df3 %>% dplyr::select(longit,lat,Abb) %>% unique()
+ggplot(data=df3,aes(longit,lat))+
+  geom_point(aes(fill=Grp_geo), shape=21,size=2)+
+  geom_text_repel(data=dfNA,aes(longit,lat,label=Abb))
+
+
+# 
+# 
+# ## Intégration shannon
+# df4=df3 %>% select(bigorneau, calliostome, gibbulecomm, gibbuleombi,lit.comp.saxa,littospp,monodonte,
+#                    nasse,pourpre,patelle)  
+# 
+# df3$Sha=diversity(df4,'shannon')
+
+
+
+# Base de donnée pour le radar Plot
+df.radar=data.frame(cbind(Abb=df3$Abb,Pred3))
+df.radar2=df.radar %>%
+mutate_at(vars(-Abb), rescale) %>%
+ gather(Var,value,-Abb) %>%
+  group_by(Abb,Var)%>%
+  dplyr::summarize(Mval=mean(value))
+
+    
+df.radarVal=df.radar %>%
+     gather(Var,value,-Abb) %>%
+     group_by(Var)%>%
+     dplyr::summarize('0.50'=round((min(value)+ (max(value)-min(value))*.5),1),
+                      '1'=round(max(value),1)) %>% gather(Perc,ValPerc,-Var)
+#
+StJacu=df3
+
+  df3$substrat3 = with(df3, factor(substrat3, levels =
+                                       c('Pel','Fspir','Fvesi','Anodo','Fser')))
+    
+  DF_bio=reshape2::melt(df3, id.var=c('Abb','AAAA','substrat3','date','longit', 'lat',"N.couv","Tot", 'recouv', 'Grp_geo'), var='Spe')
+  # DF_bio=dcast(Abb + longit+lat+ date+ recouv + substrat3 + AAAA ~ Spe, data=df3, value.var='ab')
+  DF_bio=DF_bio %>% group_by(Spe) %>% mutate(val.scaled=scale(value)) %>%         mutate(PA=case_when(value>0 ~ 1,                                                                                             TRUE ~ 0))
+
+
+save(df3,DF,Pred3,StJacu,DF.unit,DF_bio,df.radar,df.radar2,df.radarVal,file='Biolit_app_datasets.RData')
+
+```
+# Plot carte groupe de stations
+```{r}
+library(gridExtra)
+library(ggpubr)
+library(grid)
+france.form <- raster::getData(name="GADM", country="FRA", level=0)
+france=fortify(france.form)
+
+df.carto= df3 %>% dplyr::select(Grp_geo, Abb, longit,lat) %>% group_by(Grp_geo,Abb) %>%
+  dplyr::summarize(Mlong=mean(longit),
+                   Mlat=mean(lat))
+
+
+pp=ggplot()+
+   geom_polygon(data=france, aes(long,lat,group=group),colour="black", fill='grey60', size=.5)+
+   geom_point(data=df.carto,aes(Mlong,Mlat,fill=Grp_geo), shape=21,size=2)+
+  geom_label_repel(data=df.carto,aes(Mlong,Mlat,label=Abb, fill=Grp_geo), max.overlaps = Inf, size=2)+
+  guides(fill=guide_legend(title="Régions"),
+         label="none")+
+    scale_fill_brewer(guide="none", palette="Set2")+
+     coord_cartesian(xlim=c(-5,2), ylim=c(45,50.5))+
+  theme_void()
+
+
+setwd(here::here('www'))
+png('Carte_panel1.png', units="in", width=4, height=4, res=100)
+
+pp
+
+dev.off()
+
+#"ADG: “Anse Du Gesclin”, AUD: “Audresselles”, AYT: “Aytre”, BAS: “La Bastille”, BDM: “Baie des Marsoins”, BFB: “Bas Fort Blanc”. BOU: “Les Boucholeurs”, BRE: “Bretteville”, BSM: “Blainville-sur-mer”, CAB: “Cabellou”, CAL: “Cale”, CDB: “Chef de Baie”, CDG: “Cale de Gornevez”, CDS: “Concheau de Suzac”, CFR: “Cap Fréhel”, CHA:
+#DEL: “Dellec”, DJO: “Dame jouanne”, EVE: “L’Eventail”, FOG: “Fogeo”, FON: “Fort National”, GC:  “Grande Corbière – Chausey »” , GLE: “Glénan (Saint-Nicolas)”, GRB: “Grand Bé”, HSE: “Houston SE – Chausey”, IBO: “Ile de Boed”, IDB: “Iles des Ebihens”, IDU: “Ile Dumet”, ILB: “Ile de Bailleron”, ILC: “Ilot de la Colombière”,ILM: “Iles aux Mouettes”, ISL: “L’Islet”, ISM: “Ilot Saint-Michel”, IVE: “Ile Verte”, KCD: “Kercouedo”, KER: “Kermorvan”, KIB: “KignerBell”, LI: “Longue Ile – Chausey”, LOI: “Loix”, MIN: “Les Minimes”, PAG: “Pors-Ar-Goret”,  PDA: “Pointe de l’Arcouest”, PDC: “Pointe du Chay”, PDF: “Pointe de la Fumée”, PDL: “Pointe de la Loge”, PDP: “Pointe des Prouards”, PEA: “Petit Ailly”, PEG: “Père Gus”, PEN: “Penvins”, PIE: “Piegu”, PIS: “La Piscine”,  PLA: “Platin”, PM: “Port Marie –Chausey” , PNA: “Port Navalo”, POC: “Pont de la Chaume”, PPL: “Pointe du Plomb”, QUI: “Quiberville”, ROP: “Roche Percée”, ROV:  “Roche Vilaine”, SEN: “Saint-Enogat”, SGB: “Saint Guirec/Bastille”, SGO: “Saint Goustan”, SJS: “Saint Jean-des-Sables”, SMM: “Sainte Marguerite-sur-mer”, SNE: “Sud Nellière”, TAR: “La Tara”, TAT: “Tatihou”, TRE: “Trenez”, VEC: “Vert-clos”
+
+
+
+```
+
+
+```{r}
+library(ggmap)
+library(RgoogleMaps)
+
+library(RgoogleMaps)
+lat <- c(48,64) #define our map's ylim
+lon <- c(-140,-110) #define our map's xlim
+center = c(mean(lat), mean(lon))  #tell what point to center on
+zoom <- 5  #zoom: 1 = furthest out (entire globe), larger numbers = closer in
+terrmap <- GetMap(center=center, zoom=zoom, maptype= "terrain", destfile = "terrain.png") #lots of visual options, just like google maps: maptype
+
+
+# Set API Key
+ggmap::register_google(key = "AIzaSyCnDfrgoyRc7c9DpzBl3J9irXJUerfzrrI")
+
+# get the map info
+map <- get_googlemap("Dinard, France", zoom = 8, maptype = "terrain")
+map <- get_googlemap(center=c(-2.03,  48.63), zoom=15, maptype = "hybrid")
+
+# Plot it
+ggmap(map) + 
+  theme_void()
+
+
+```
+
+# Use OSM (Open Street View) --> Nope
+```{r}
+
+```
+
