@@ -194,7 +194,9 @@ server <- function(input, output) {
       theme_minimal()+
       ylab('Fréquence des abondances (%)')+
       xlab('Classe de recouvrement')+
-      guides(col=guide_legend(title="Taxons"))
+      guides(col=guide_legend(title="Taxons"))+
+    theme(axis.title = element_text(size = 12),
+          plot.title=element_text(size=22, face="bold"))
     
     p2=ggplot(data=DF_bio2,aes(substrat3,as.numeric(val.scaled), col=Spe))+
       # geom_jitter()+
@@ -204,7 +206,9 @@ server <- function(input, output) {
       theme_minimal()+
       ylab('Fréquence des abondances (%)')+
       xlab('Ceinture algues brunes')+
-      guides(col=guide_legend(title="Taxons"))
+      guides(col=guide_legend(title="Taxons"))+
+      theme(axis.title = element_text(size = 12),
+            plot.title=element_text(size=22, face="bold"))
     
     
     ggpubr::ggarrange(p1,p2, ncol=1, common.legend=T)# mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
