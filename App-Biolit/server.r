@@ -78,7 +78,7 @@ server <- function(input, output) {
   })
   
   
-  ## Plot 2 
+  ## Radar plot
   output$RadarPlot <- renderPlot({
 
 
@@ -132,11 +132,11 @@ server <- function(input, output) {
   output$Site_identity <- renderPlot({
 
     # mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
-    france.form <- raster::getData(name="GADM", country="FRA", level=0)
-    france=fortify(france.form)
-    
-    
-    DF=DF%>% mutate(Vern.lab=paste0(Abb,'=',Vern))
+    # france.form <- raster::getData(name="GADM", country="FRA", level=0)
+    # france=fortify(france.form)
+    # 
+    # 
+    # DF=DF%>% mutate(Vern.lab=paste0(Abb,'=',Vern))
     
     df.geo3=DF %>% filter(Abb %in% input$Sites)
     
@@ -214,6 +214,9 @@ server <- function(input, output) {
     ggpubr::ggarrange(p1,p2, ncol=1, common.legend=T)# mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
   })
   
+  
+  
+  # Table gastéropode
   output$table_spe = DT::renderDataTable({
     dat.spe <- data.frame(
       Nom_vernaculaire = c('gibbule commune', 'gibbule ombiliquée','littorine fabalis'),
@@ -292,15 +295,15 @@ server <- function(input, output) {
     
   })
   
-  ## Identifi site Compo
+  ## Carte compo
   output$Site_identity_compo <- renderPlot({
     
     # mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
-    france.form <- raster::getData(name="GADM", country="FRA", level=0)
-    france=fortify(france.form)
-    
-    
-    DF=DF%>% mutate(Vern.lab=paste0(Abb,'=',Vern))
+    # france.form <- raster::getData(name="GADM", country="FRA", level=0)
+    # france=fortify(france.form)
+    # 
+    # 
+    # DF=DF%>% mutate(Vern.lab=paste0(Abb,'=',Vern))
     
     df.geo3=DF %>% filter(Abb %in% input$Site_compo)
     
@@ -310,7 +313,7 @@ server <- function(input, output) {
       geom_point(data=df.geo3,aes(longit,lat, fill=Abb), shape=21, size=9)+
       geom_label_repel(data=df.geo3,aes(longit,lat, label=Vern.lab), size=8)+
       coord_cartesian(xlim=c(-5,2), ylim=c(45,50.5))+
-      guides(fill=F)+
+      guides(fill="none")+
       theme_void()
   })
 }
