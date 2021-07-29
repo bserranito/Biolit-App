@@ -78,7 +78,17 @@ ui <- fluidPage(
                
                mainPanel(plotOutput(outputId = "Rank_species"),
                          p(h1("Description: blablabla?")))),
-             )
+             ),
+    
+    tabPanel(title = "Bioindication et intégrité ecologique",
+           
+               
+              p(h1("En construction...",align = "center")),
+                   img(src = "chantier.jpg", height = 300, width = 500) ,
+             
+             # Sidebar with a slider input for number of bins 
+            
+    )
     # sidebarLayout(
     #             sidebarPanel(radioButtons('Var_resp', h3('Selection de la variabiable Bio'),
     #                                      choices=list('Abondance Totale'='Tot',
