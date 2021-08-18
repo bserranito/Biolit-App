@@ -1,6 +1,6 @@
 #list of packages required
 list.of.packages <- c("shiny","dplyr","ggplot2","reshape2","ggpubr","Rcpp","units","Hmisc","lifecycle","gridExtra","grid",
-                      "ggrepel","DT")
+                      "ggrepel","DT","maptools")
 
 #checking missing packages from list
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -21,6 +21,7 @@ library(gridExtra)
 library(grid)
 library(ggrepel)
 library(DT)
+library(maptools)
 
 load('Biolit_app_datasets.RData')
 
@@ -140,6 +141,53 @@ server <- function(input, output) {
     
     df.geo3=DF %>% filter(Abb %in% input$Sites)
     
+    ## ajout échelle
+    create_scale_bar <- function(lon,lat,distance_lon,distance_lat,distance_legend, dist_units = "km"){
+      # First rectangle
+      bottom_right <- gcDestination(lon = lon, lat = lat, bearing = 90, dist = distance_lon, dist.units = dist_units, model = "WGS84")
+      
+      topLeft <- gcDestination(lon = lon, lat = lat, bearing = 0, dist = distance_lat, dist.units = dist_units, model = "WGS84")
+      rectangle <- cbind(lon=c(lon, lon, bottom_right[1,"long"], bottom_right[1,"long"], lon),
+                         lat = c(lat, topLeft[1,"lat"], topLeft[1,"lat"],lat, lat))
+      rectangle <- data.frame(rectangle, stringsAsFactors = FALSE)
+      
+      # Second rectangle t right of the first rectangle
+      bottom_right2 <- gcDestination(lon = lon, lat = lat, bearing = 90, dist = distance_lon*2, dist.units = dist_units, model = "WGS84")
+      rectangle2 <- cbind(lon = c(bottom_right[1,"long"], bottom_right[1,"long"], bottom_right2[1,"long"], bottom_right2[1,"long"], bottom_right[1,"long"]),
+                          lat=c(lat, topLeft[1,"lat"], topLeft[1,"lat"], lat, lat))
+      rectangle2 <- data.frame(rectangle2, stringsAsFactors = FALSE)
+      
+      # Now let's deal with the text
+      on_top <- gcDestination(lon = lon, lat = lat, bearing = 0, dist = distance_legend, dist.units = dist_units, model = "WGS84")
+      on_top2 <- on_top3 <- on_top
+      on_top2[1,"long"] <- bottom_right[1,"long"]
+      on_top3[1,"long"] <- bottom_right2[1,"long"]
+      
+      legend <- rbind(on_top, on_top2, on_top3)
+      legend <- data.frame(cbind(legend, text = c(0, distance_lon, distance_lon*2)), stringsAsFactors = FALSE, row.names = NULL)
+      return(list(rectangle = rectangle, rectangle2 = rectangle2, legend = legend))
+    }
+    scale_bar <- function(lon, lat, distance_lon, distance_lat, distance_legend, dist_unit = "km", rec_fill = "white", rec_colour = "black", rec2_fill = "black", rec2_colour = "black", legend_colour = "black", legend_size = 3, orientation = TRUE, arrow_length = 500, arrow_distance = 300, arrow_north_size = 6){
+      the_scale_bar <- create_scale_bar(lon = lon, lat = lat, distance_lon = distance_lon, distance_lat = distance_lat, distance_legend = distance_legend, dist_unit = dist_unit)
+      # First rectangle
+      rectangle1 <- geom_polygon(data = the_scale_bar$rectangle, aes(x = lon, y = lat), fill = rec_fill, colour = rec_colour)
+      
+      # Second rectangle
+      rectangle2 <- geom_polygon(data = the_scale_bar$rectangle2, aes(x = lon, y = lat), fill = rec2_fill, colour = rec2_colour)
+      
+      # Legend
+      scale_bar_legend <- annotate("text", label = paste(the_scale_bar$legend[,"text"], dist_unit, sep=""), x = the_scale_bar$legend[,"long"], y = the_scale_bar$legend[,"lat"], size = legend_size, colour = legend_colour)
+      
+      res <- list(rectangle1, rectangle2, scale_bar_legend)
+      
+      if(orientation){# Add an arrow pointing North
+        coords_arrow <- create_orientation_arrow(scale_bar = the_scale_bar, length = arrow_length, distance = arrow_distance, dist_unit = dist_unit)
+        arrow <- list(geom_segment(data = coords_arrow$res, aes(x = x, y = y, xend = xend, yend = yend)), annotate("text", label = "N", x = coords_arrow$coords_n[1,"x"], y = coords_arrow$coords_n[1,"y"], size = arrow_north_size, colour = "black"))
+        res <- c(res, arrow)
+      }
+      return(res)
+    }
+    
     ggplot()+
       geom_polygon(data=france, aes(long,lat,group=group),colour="black", fill='grey70', size=.5)+
       geom_point(data=DF,aes(longit,lat),fill='Black', shape=21,size=5)+
@@ -147,7 +195,10 @@ server <- function(input, output) {
       geom_label_repel(data=df.geo3,aes(longit,lat, label=Vern.lab), size=8)+
       coord_cartesian(xlim=c(-5,2), ylim=c(45,50.5))+
       guides(fill=F)+
-      theme_void()
+      theme_void()+
+      scale_bar(lon = -4.5, lat = 45, 
+                distance_lon = 80, distance_lat = 10, distance_legend = 20, 
+                dist_unit = "km", orientation = FALSE)
   })
   
   # # Plot 2
@@ -179,7 +230,7 @@ server <- function(input, output) {
   #     xlab('')
   # })
   
-  # Plot 3
+  # Plot 3 : relation taxons- canopées
   output$Estran_plot <- renderPlot({
     
     
@@ -265,11 +316,25 @@ server <- function(input, output) {
       facet_grid(.~substrat3, scale="free_y")+
       # scale_y_log10()+
       guides(fill=guide_legend(title="Taxons"))+
-      scale_fill_brewer(palette="Spectral")+
-      ylab(lab.y)  +
-      geom_text( aes(x=max(rank)-.2, y=max(M), label=count2))+
+      scale_fill_brewer(palette="Spectral", labels=c('Bigorneau','Calliostome',
+                                                     'Gibbule de Pennant',
+                                                     'Gibbule ombiliquée',
+                                                     'Littorine lignes noires/des rochers',
+                                                     'Littorine fabalis/obtuse',
+                                                     'Monodonte',
+                                                     'Nasse reticulée',
+                                                     'Pourpre',
+                                                     'Patelle'))+
+      ylab(lab.y)+
+      geom_text( aes(x=max(rank)-.2, y=max(M), label=count2), size=5)+
       theme_light()+
-      theme(axis.title = element_text(size = 12),
+      theme(legend.text = element_text(size=13),
+            legend.title = element_text(size=15, face="bold"),
+        axis.title = element_text(size = 12),
+        axis.text.x=element_text(size=12),
+        axis.title.y=element_text(size=15, face='bold'),
+        axis.title.x =element_text(size=15, face='bold'),
+        strip.text.x = element_text(size = 16, face='bold'),
             plot.title=element_text(size=22, face="bold"))+
       xlab('rang des taxons')+
       ggtitle("Composition de l'estran choisi")
@@ -281,19 +346,33 @@ server <- function(input, output) {
       facet_grid(.~substrat3, scale="free_y")+
       # scale_y_log10()+
       guides(fill=guide_legend(title="Taxons"))+
-      scale_fill_brewer(palette="Spectral")+
+      scale_fill_brewer(palette="Spectral", labels=c('Bigorneau','Calliostome',
+                                                     'Gibbule de Pennant',
+                                                     'Gibbule ombiliquée',
+                                                     'Littorine lignes noires/des rochers',
+                                                     'Littorine fabalis/obtuse',
+                                                     'Monodonte',
+                                                     'Nasse reticulée',
+                                                     'Pourpre',
+                                                     'Patelle'))+
       ylab(lab.y)  +
       geom_text( aes(x=max(rank)-1, y=max(M), label=count2))+
       theme_light()+
-      theme(axis.title = element_text(size = 12),
+      theme(legend.text = element_text(size=13),
+            legend.title = element_text(size=15, face="bold"),
+            axis.title = element_text(size = 12),
+            axis.title.x =element_text(size=15, face='bold'),
+            axis.title.y=element_text(size=15, face='bold'),
+            strip.text.x = element_text(size = 16, face='bold'),
+            axis.text.x=element_text(size=12),
             plot.title=element_text(size=22, face="bold"))+
       xlab('rang des taxons')+
       ggtitle("Composition de l'ensemble des stations")
     
     
-    ggpubr::ggarrange(comp1,comp2, ncol=1, common.legend=T)#
+    ggpubr::ggarrange(comp1,comp2, ncol=1, common.legend=T, legend='right')#
     
-  })
+  },height = 800, width = 1200)
   
   ## Carte compo
   output$Site_identity_compo <- renderPlot({
@@ -307,6 +386,54 @@ server <- function(input, output) {
     
     df.geo3=DF %>% filter(Abb %in% input$Site_compo)
     
+    
+    ## ajout échelle
+    create_scale_bar <- function(lon,lat,distance_lon,distance_lat,distance_legend, dist_units = "km"){
+      # First rectangle
+      bottom_right <- gcDestination(lon = lon, lat = lat, bearing = 90, dist = distance_lon, dist.units = dist_units, model = "WGS84")
+      
+      topLeft <- gcDestination(lon = lon, lat = lat, bearing = 0, dist = distance_lat, dist.units = dist_units, model = "WGS84")
+      rectangle <- cbind(lon=c(lon, lon, bottom_right[1,"long"], bottom_right[1,"long"], lon),
+                         lat = c(lat, topLeft[1,"lat"], topLeft[1,"lat"],lat, lat))
+      rectangle <- data.frame(rectangle, stringsAsFactors = FALSE)
+      
+      # Second rectangle t right of the first rectangle
+      bottom_right2 <- gcDestination(lon = lon, lat = lat, bearing = 90, dist = distance_lon*2, dist.units = dist_units, model = "WGS84")
+      rectangle2 <- cbind(lon = c(bottom_right[1,"long"], bottom_right[1,"long"], bottom_right2[1,"long"], bottom_right2[1,"long"], bottom_right[1,"long"]),
+                          lat=c(lat, topLeft[1,"lat"], topLeft[1,"lat"], lat, lat))
+      rectangle2 <- data.frame(rectangle2, stringsAsFactors = FALSE)
+      
+      # Now let's deal with the text
+      on_top <- gcDestination(lon = lon, lat = lat, bearing = 0, dist = distance_legend, dist.units = dist_units, model = "WGS84")
+      on_top2 <- on_top3 <- on_top
+      on_top2[1,"long"] <- bottom_right[1,"long"]
+      on_top3[1,"long"] <- bottom_right2[1,"long"]
+      
+      legend <- rbind(on_top, on_top2, on_top3)
+      legend <- data.frame(cbind(legend, text = c(0, distance_lon, distance_lon*2)), stringsAsFactors = FALSE, row.names = NULL)
+      return(list(rectangle = rectangle, rectangle2 = rectangle2, legend = legend))
+    }
+    scale_bar <- function(lon, lat, distance_lon, distance_lat, distance_legend, dist_unit = "km", rec_fill = "white", rec_colour = "black", rec2_fill = "black", rec2_colour = "black", legend_colour = "black", legend_size = 3, orientation = TRUE, arrow_length = 500, arrow_distance = 300, arrow_north_size = 6){
+      the_scale_bar <- create_scale_bar(lon = lon, lat = lat, distance_lon = distance_lon, distance_lat = distance_lat, distance_legend = distance_legend, dist_unit = dist_unit)
+      # First rectangle
+      rectangle1 <- geom_polygon(data = the_scale_bar$rectangle, aes(x = lon, y = lat), fill = rec_fill, colour = rec_colour)
+      
+      # Second rectangle
+      rectangle2 <- geom_polygon(data = the_scale_bar$rectangle2, aes(x = lon, y = lat), fill = rec2_fill, colour = rec2_colour)
+      
+      # Legend
+      scale_bar_legend <- annotate("text", label = paste(the_scale_bar$legend[,"text"], dist_unit, sep=""), x = the_scale_bar$legend[,"long"], y = the_scale_bar$legend[,"lat"], size = legend_size, colour = legend_colour)
+      
+      res <- list(rectangle1, rectangle2, scale_bar_legend)
+      
+      if(orientation){# Add an arrow pointing North
+        coords_arrow <- create_orientation_arrow(scale_bar = the_scale_bar, length = arrow_length, distance = arrow_distance, dist_unit = dist_unit)
+        arrow <- list(geom_segment(data = coords_arrow$res, aes(x = x, y = y, xend = xend, yend = yend)), annotate("text", label = "N", x = coords_arrow$coords_n[1,"x"], y = coords_arrow$coords_n[1,"y"], size = arrow_north_size, colour = "black"))
+        res <- c(res, arrow)
+      }
+      return(res)
+    }
+    
     ggplot()+
       geom_polygon(data=france, aes(long,lat,group=group),colour="black", fill='grey70', size=.5)+
       geom_point(data=DF,aes(longit,lat),fill='Black', shape=21,size=5)+
@@ -314,6 +441,9 @@ server <- function(input, output) {
       geom_label_repel(data=df.geo3,aes(longit,lat, label=Vern.lab), size=8)+
       coord_cartesian(xlim=c(-5,2), ylim=c(45,50.5))+
       guides(fill="none")+
-      theme_void()
+      theme_void()+
+      scale_bar(lon = -4.5, lat = 45, 
+                distance_lon = 80, distance_lat = 10, distance_legend = 20, 
+                dist_unit = "km", orientation = FALSE)
   })
 }
