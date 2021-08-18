@@ -400,9 +400,16 @@ StJacu=df3
   DF_bio=reshape2::melt(df3, id.var=c('Abb','AAAA','substrat3','date','longit', 'lat',"N.couv","Tot", 'recouv', 'Grp_geo'), var='Spe')
   # DF_bio=dcast(Abb + longit+lat+ date+ recouv + substrat3 + AAAA ~ Spe, data=df3, value.var='ab')
   DF_bio=DF_bio %>% group_by(Spe) %>% mutate(val.scaled=scale(value)) %>%         mutate(PA=case_when(value>0 ~ 1,                                                                                             TRUE ~ 0))
+  
+  
+  
+  # Pour carte interactive
+  france.form <- raster::getData(name="GADM", country="FRA", level=0)
+    france=fortify(france.form)
+    
+    DF=DF%>% mutate(Vern.lab=paste0(Abb,'=',Vern))
 
-
-save(df3,DF,Pred3,StJacu,DF.unit,DF_bio,df.radar,df.radar2,df.radarVal,file='Biolit_app_datasets.RData')
+save(df3,DF,Pred3,StJacu,DF.unit,DF_bio,df.radar,df.radar2,df.radarVal,france,file='Biolit_app_datasets.RData')
 
 ```
 # Plot carte groupe de stations
