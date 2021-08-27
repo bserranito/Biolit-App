@@ -91,7 +91,7 @@ server <- function(input, output) {
                  color = ~inferno(n), fillOpacity = 0.6, 
                  label = ~as.character(Vern),
                  popup = ~paste( '<B>Site<B>:',Vern, "<BR>",
-                                              '<B>Nbre quadras<B>:', n))
+                                              '<B>Nbre quadrats<B>:', n))
                    # addCircles(data = data, lat = ~ latitude, lng = ~ longitude, weight = 1, radius = ~sqrt(mag)*25000,
                    #            popup = ~as.character(mag), label = ~as.character(paste0("Magnitude: ", sep = " ", mag)),
                    #            color = ~pal(mag), fillOpacity = 0.5)
