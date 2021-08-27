@@ -325,8 +325,10 @@ Pred3= Pred2 %>% dplyr::select(-Cover) %>% rename(Chloa='Chloa_new.mean',
   SSTco=0.01*SSTcold) %>% dplyr::select(-SST.M,-SSTcold)
 
 
-DF=cbind(df3,Pred3) %>% dplyr::select(Abb,longit,lat, colnames(Pred3)) %>%  distinct()%>% group_by(Abb) %>%
-  summarise_at(c('longit','lat',colnames(Pred3)), mean) 
+DF=cbind(df3,Pred3) %>% group_by(Abb) %>% mutate(n=n())%>% ungroup() %>%
+dplyr::select(Abb,longit,lat, colnames(Pred3), n) %>%  distinct()%>%
+  group_by(Abb,n) %>%
+  summarise_at(c('longit','lat',colnames(Pred3)), mean)
 
 DF=merge(DF, Est.abb2, by='Abb') %>% rename(Vern='V1')
 
@@ -408,6 +410,15 @@ StJacu=df3
     france=fortify(france.form)
     
     DF=DF%>% mutate(Vern.lab=paste0(Abb,'=',Vern))
+    
+    
+    
+    # # Pour carte interactive du premier panneau
+    # df_mapInt=df3 %>% group_by(Abb)%>%
+    #   mutate(n=n())%>%group_by(Abb,n)%>%
+    #  dplyr::summarize(X=mean(longit),Y=mean(lat))
+    
+    
 
 save(df3,DF,Pred3,StJacu,DF.unit,DF_bio,df.radar,df.radar2,df.radarVal,france,file='Biolit_app_datasets.RData')
 

@@ -54,6 +54,8 @@ ui <- fluidPage(
                 afin de permettre à chacun de mieux comprendre le fonctionnement et la structure de ces habitats si particuliers.")))),
                 br(),
                 
+                leafletOutput(outputId="interactive_map"),
+                
                 
                 h3(strong('Description des différents panneaux')),
                 br(),
@@ -102,7 +104,7 @@ utilisé (n) a également été indiqué.'))
   
   
 
-    tabPanel(title = "Variables Environnementales",
+    tabPanel(title = "Profil Environnemental",
              # Sidebar with a slider input for number of bins 
              sidebarLayout(
                sidebarPanel(
@@ -200,7 +202,7 @@ utilisé (n) a également été indiqué.'))
                           
                ))),
     
-    tabPanel(title="Sur l'estran...",
+    tabPanel(title="L'estran et ses habitants",
              sidebarLayout(
                sidebarPanel(
                       selectInput("sel_spe", h4("Choisir le/les espèces"),
@@ -217,7 +219,7 @@ utilisé (n) a également été indiqué.'))
                # column(4,
                #        img(src ="estran_zonation.png", height = 400, width = 250))
              )),
-    tabPanel(title = "Composition taxonomique",
+    tabPanel(title = "D'un estran à l'autre...",
              # Sidebar with a slider input for number of bins 
              sidebarLayout(
                sidebarPanel(

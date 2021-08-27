@@ -1,6 +1,6 @@
 #list of packages required
 list.of.packages <- c("shiny","dplyr","ggplot2","reshape2","ggpubr","Rcpp","units","Hmisc","lifecycle","gridExtra","grid",
-                      "ggrepel","DT","maptools")
+                      "ggrepel","DT","maptools","leaflet",'leaflet.extras','viridis')
 
 #checking missing packages from list
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -22,6 +22,9 @@ library(grid)
 library(ggrepel)
 library(DT)
 library(maptools)
+library(leaflet)
+library(leaflet.extras)
+library(viridis)
 
 load('Biolit_app_datasets.RData')
 
@@ -76,6 +79,23 @@ server <- function(input, output) {
             axis.text.x=element_text(size=12),
             axis.text.y=element_blank())+
       ylab('')+ xlab(paste0('gradient de la variable (',unit,')'))
+  })
+  
+  ## Interactive map
+  output$interactive_map <- renderLeaflet({
+    leaflet(data) %>% 
+      setView(lng = 0, lat = 47.5, zoom = 6)  %>% #setting the view over ~ center of North America
+      addTiles()%>%
+      addCircles(data= DF, lat=~ lat, lng=~longit, weight=1,
+                 radius = ~sqrt(n)*2000,
+                 color = ~inferno(n), fillOpacity = 0.6, 
+                 label = ~as.character(Vern),
+                 popup = ~paste( '<B>Site<B>:',Vern, "<BR>",
+                                              '<B>Nbre quadras<B>:', n))
+                   # addCircles(data = data, lat = ~ latitude, lng = ~ longitude, weight = 1, radius = ~sqrt(mag)*25000,
+                   #            popup = ~as.character(mag), label = ~as.character(paste0("Magnitude: ", sep = " ", mag)),
+                   #            color = ~pal(mag), fillOpacity = 0.5)
+
   })
   
   
@@ -246,8 +266,14 @@ server <- function(input, output) {
       ylab('Fréquence des abondances (%)')+
       xlab('Classe de recouvrement')+
       guides(col=guide_legend(title="Taxons"))+
-    theme(axis.title = element_text(size = 12),
-          plot.title=element_text(size=22, face="bold"))
+    theme(legend.text = element_text(size=13),
+           legend.title = element_text(size=15, face="bold"),
+           axis.title = element_text(size = 12),
+           axis.text.x=element_text(size=15),
+           # axis.title.y=element_text(size=15, face='bold'),
+           axis.title.x =element_text(size=15, face='bold'),
+           # strip.text.x = element_text(size = 16, face='bold'),
+           plot.title=element_text(size=22, face="bold"))
     
     p2=ggplot(data=DF_bio2,aes(substrat3,as.numeric(val.scaled), col=Spe))+
       # geom_jitter()+
@@ -258,8 +284,16 @@ server <- function(input, output) {
       ylab('Fréquence des abondances (%)')+
       xlab('Ceinture algues brunes')+
       guides(col=guide_legend(title="Taxons"))+
-      theme(axis.title = element_text(size = 12),
+      theme(legend.text = element_text(size=13),
+            legend.title = element_text(size=15, face="bold"),
+            axis.title = element_text(size = 12),
+            axis.text.x=element_text(size=15),
+            # axis.title.y=element_text(size=15, face='bold'),
+            axis.title.x =element_text(size=15, face='bold'),
+            # strip.text.x = element_text(size = 16, face='bold'),
             plot.title=element_text(size=22, face="bold"))
+      # theme(axis.title = element_text(size = 12),
+      #       plot.title=element_text(size=22, face="bold"))
     
     
     ggpubr::ggarrange(p1,p2, ncol=1, common.legend=T)# mutate(Site=case_when(Abb %in% input$Sites_Ab ~ "Stations", TRUE ~ "Autres"))
