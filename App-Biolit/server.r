@@ -216,7 +216,7 @@ server <- function(input, output) {
       geom_point(data=df.geo3,aes(longit,lat, fill=Abb), shape=21, size=9)+
       geom_label_repel(data=df.geo3,aes(longit,lat, label=Vern.lab), size=8)+
       coord_cartesian(xlim=c(-5,2), ylim=c(45,50.5))+
-      guides(fill=F)+
+      guides(fill='none')+
       theme_void()+
       scale_bar(lon = -4.5, lat = 45, 
                 distance_lon = 80, distance_lat = 10, distance_legend = 20, 

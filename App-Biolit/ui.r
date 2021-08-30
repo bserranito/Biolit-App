@@ -1,32 +1,18 @@
 ############## UI scriptlibrary(shiny)
 #list of packages required
-list.of.packages <- c("shiny","dplyr","ggplot2","reshape2","ggpubr","Rcpp","units","Hmisc","lifecycle","gridExtra","grid",
-                      "ggrepel","DT","maptools","leaflet",'leaflet.extras','viridis')
+list.of.packages <- c("DT","leaflet")
 
 #checking missing packages from list
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 
 #install missing ones
-if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
+if(length(new.packages))
+  install.packages(new.packages, dependencies = TRUE)
 
 ######  server 
-library(shiny)
-library(dplyr)
-library(reshape2)
-library(ggplot2)
-library(ggpubr)
-library(Rcpp)
-library(Hmisc)
-library(lifecycle)
-library(gridExtra)
-library(grid)
-library(ggrepel)
-library(DT)
-library(maptools)
-library(leaflet)
-library(leaflet.extras)
-library(viridis)
 
+library(DT)
+library(leaflet)
 
 
 # Define UI for application that draws a histogram
@@ -51,7 +37,7 @@ ui <- fluidPage(
               en collaboration avec la station du Muséum National d’Histoire Naturelle du CRESCO de Dinard.'),
                         ),
     
-    mainPanel(  h2("Le programme 'Algues Brunes et Bigorneaux'", align="center"),
+    mainPanel(h2("Le programme 'Algues Brunes et Bigorneaux'", align="center"),
                 br(),
                 p('Situées dans la zone de balancement des marées, les habitats formés par les algues brunes associés aux estrans rocheux
                 sont depuis 
@@ -80,7 +66,7 @@ ui <- fluidPage(
                 afin de permettre à chacun de mieux comprendre le fonctionnement et la structure de ces habitats si particuliers.")))),
                 br(),
                 
-                leafletOutput(outputId="interactive_map"),
+                leaflet::leafletOutput(outputId="interactive_map"),
                 
                 
                 h3(strong('Description des différents panneaux')),
