@@ -1,30 +1,4 @@
-#list of packages required
-list.of.packages <- c("shiny","dplyr","ggplot2","reshape2","ggpubr","Rcpp","units","Hmisc","lifecycle","gridExtra","grid",
-                      "ggrepel","DT","maptools","leaflet",'leaflet.extras','viridis')
 
-#checking missing packages from list
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-
-#install missing ones
-if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
-
-######  server 
-library(shiny)
-library(dplyr)
-library(reshape2)
-library(ggplot2)
-library(ggpubr)
-library(Rcpp)
-library(Hmisc)
-library(lifecycle)
-library(gridExtra)
-library(grid)
-library(ggrepel)
-library(DT)
-library(maptools)
-library(leaflet)
-library(leaflet.extras)
-library(viridis)
 
 load('Biolit_app_datasets.RData')
 
