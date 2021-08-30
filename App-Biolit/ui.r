@@ -1,22 +1,9 @@
-############## UI scriptlibrary(shiny)
-#list of packages required
-list.of.packages <- c("DT","leaflet")
 
-#checking missing packages from list
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-
-#install missing ones
-if(length(new.packages))
-  install.packages(new.packages, dependencies = TRUE)
-
-######  server 
-
-library(DT)
-library(leaflet)
 
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
+
   # Application title
   titlePanel(div(img(src = "logo BioLit.jpg", height = 80, width = 150),
                  img(src = "planete-mer.jpg", height = 100, width = 100),
